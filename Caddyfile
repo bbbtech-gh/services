@@ -1,0 +1,11 @@
+bbbcntr.localhost {
+	reverse_proxy bbbcntr:4000
+}
+
+ppai.localhost {
+	reverse_proxy bbbcntr:5173
+}
+
+api.ppai.localhost {
+	reverse_proxy bot_api:8000
+}

@@ -1,0 +1,79 @@
+# services:
+#   db:
+#     environment:
+      # PGDATA: /var/lib/postgresql/data/pgdata
+      # POSTGRES_PASSWORD: postgres
+      # POSTGRES_USER: postgres
+      # POSTGRES_HOST_AUTH_METHOD: trust
+#     image: 'postgres:11-alpine'
+#     restart: always
+#     volumes:
+#       - 'pgdata:/var/lib/postgresql/data'
+# 	bbbcntr:
+#     build:
+#       dockerfile: bbbcntr.dockerfile
+#       context: .
+#     environment:
+#       - BUILD_VERSION=${BUILD_VERSION}
+#     # volumes:
+#     #   - type: bind
+#     #     source: ${PWD}/database.db
+#     #     target: /app/database.db
+#   caddy:
+#     image: caddy:2.7-alpine
+#     restart: unless-stopped
+#     ports:
+#       - "80:80"
+#       - "443:443"
+#       - "443:443/udp"
+#     volumes:
+#       - $PWD/Caddyfile:/etc/caddy/Caddyfile
+
+services:
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - db_data:/var/lib/postgresql/data
+  bbbcntr:
+    build:
+      dockerfile: bbbcntr.dockerfile
+      context: .
+    environment:
+      - BUILD_VERSION=${BUILD_VERSION}
+      - DATABASE_URL=ecto://postgres:postgres@db/postgres
+      - PHX_HOST=bbbcntr.localhost
+      - ERL_MAX_PORTS=1024
+      # - PORT: "4000"
+      - SECRET_KEY_BASE="g+v82QIGqp8YdRVb3PCmcNgc43sAuGdb0SnX9GK+74OVRlAjmdaikFgwBLmINJAJ" # i nkow this is bad
+      # - APP_NAME: bbbcntr
+    depends_on:
+      - db
+  caddy:
+    image: caddy:2.7-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - $PWD/Caddyfile:/etc/caddy/Caddyfile
+  bot_api:
+    build:
+      dockerfile: bot_api.dockerfile
+      context: .
+    # environment:
+      # - BUILD_VERSION=${BUILD_VERSION}
+      # - DATABASE_URL=ecto://postgres:postgres@db/postgres
+      # - ERL_MAX_PORTS=1024
+      # # - PORT: "4000"
+      # - SECRET_KEY_BASE="g+v82QIGqp8YdRVb3PCmcNgc43sAuGdb0SnX9GK+74OVRlAjmdaikFgwBLmINJAJ" # i nkow this is bad
+      # - APP_NAME: bbbcntr
+    depends_on:
+      - db
+
+volumes:
+  db_data:
