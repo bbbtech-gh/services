@@ -26,3 +26,5 @@ list all tokens
 ### POST /tokens
 
 ### POST /clients
+
+### POST /user [todo]

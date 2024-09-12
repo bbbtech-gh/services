@@ -9,6 +9,70 @@ use crate::errors::CustomError;
 use crate::models::*;
 
 
+macro_rules! check_unique {
+    (
+        $value:expr, 
+        $column:ident, 
+        $table:ident, 
+        $error:expr,
+        $pool:expr
+    ) => {
+        let sql = format!("SELECT COUNT(*) FROM {} where {}=$1", stringify!($table), stringify!($column)).to_string();
+
+        let exists = sqlx::query_scalar::<_, i64>(&sql)
+            .bind($value)
+            .fetch_one($pool)
+            .await
+            .map_err(|e| {
+                println!("{:?}", e);
+                $error
+            })? > 0;
+        println!("{:?}", exists);
+        if exists {
+            return Err($error)
+        }
+        // println!("Hello!")
+    };
+}
+
+pub async fn approve_client(email: String, domain: String, pool: PgPool) -> Result<(), CustomError> {
+    // let pool = PgPoolOptions::new()
+    //     .max_connections(5)
+    //     .connect(&durl)
+    //     .await
+    //     .expect("unable to make connection");
+
+    let mut sql = "SELECT * FROM pending_clients where email=$1 and domain=$2".to_string();
+
+    let client = sqlx::query_as::<_, NewClient>(&sql)
+        .bind(email)
+        .bind(domain)
+        .fetch_one(&pool)
+        .await
+        .map_err(|_| {
+            CustomError::ClientNotFound
+        })?;
+        // .unwrap();
+
+    // here we know the client exists, so we move it from pending_clients to clients.
+    sql = "INSERT INTO clients (email, domain, detail, created_on, updated_on) values ($1, $2, $3, $4, $5)".to_string();
+
+    sqlx::query(&sql)
+        .bind(&client.email)
+        .bind(&client.domain)
+        .bind(&client.detail)
+        .bind(chrono::offset::Local::now())
+        .bind(chrono::offset::Local::now())
+        .execute(&pool)
+        .await
+        .map_err(|e| {
+            println!("{:?}", e);
+            CustomError::InternalServerError
+        })?;
+    return Ok(())
+}
+
+
 pub async fn all_tokens(Extension(pool): Extension<PgPool>) -> impl IntoResponse {
     let sql = "SELECT * FROM tokens ".to_string();
 
@@ -128,22 +192,97 @@ pub async fn new_client(
     // error: `Json<_>` consumes the request body and thus must be the last argument to the handler function
 ) -> Result <(StatusCode, Json<NewClient>), CustomError> {
 
+    check_unique!( 
+        &client.domain,
+        domain,
+        pending_clients,
+        CustomError::ClientApplicationExists,
+        &pool
+    );
+
+    check_unique!( 
+        &client.domain,
+        domain,
+        clients,
+        CustomError::ClientExists,
+        &pool
+    );
+
+    check_unique!( 
+        &client.email,
+        email,
+        pending_clients,
+        CustomError::ClientApplicationExists,
+        &pool
+    );
+
+    check_unique!( 
+        &client.email,
+        email,
+        clients,
+        CustomError::ClientExists,
+        &pool
+    );
+
     // println!("{:?} {:?}", client, chrono::offset::Local::now());
     
-    // let sql = "INSERT INTO clients (email, domain, detail, created_on, updated_on) values ($1, $2, $3, $4, $5)";
+    let sql = "INSERT INTO pending_clients (email, domain, detail, created_on) values ($1, $2, $3, $4)";
 
-    // let _ = sqlx::query(&sql)
-    //     .bind(&client.email)
-    //     .bind(&client.domain)
-    //     .bind(&client.detail)
-    //     .bind(chrono::offset::Local::now())
-    //     .bind(chrono::offset::Local::now())
-    //     .execute(&pool)
-    //     .await
-    //     .map_err(|e| {
-    //         println!("{:?}", e);
-    //         CustomError::InternalServerError
-    //     })?;
+    let _ = sqlx::query(&sql)
+        .bind(&client.email)
+        .bind(&client.domain)
+        .bind(&client.detail)
+        .bind(chrono::offset::Local::now())
+        .execute(&pool)
+        .await
+        .map_err(|e| {
+            println!("{:?}", e);
+            CustomError::InternalServerError
+        })?;
 
     Ok((StatusCode::CREATED, Json(client)))
+}
+
+#[axum::debug_handler]
+pub async fn new_user(
+    Extension(pool): Extension<PgPool>,
+    Json(user): Json<NewUser>, // JSON at end to avoid
+    // error: `Json<_>` consumes the request body and thus must be the last argument to the handler function
+) -> Result <(StatusCode, Json<NewUser>), CustomError> {
+
+    check_unique!( 
+        &user.email,
+        email,
+        users,
+        CustomError::UserExists,
+        &pool
+    );
+
+    check_unique!( 
+        &user.bbb_id,
+        bbb_id,
+        users,
+        CustomError::UserExists,
+        &pool
+    );
+
+    // println!("{:?} {:?}", client, chrono::offset::Local::now());
+    
+    let sql = "INSERT INTO users (bbb_id, email, phone, data, created_on, updated_on) values ($1, $2, $3, $4, $5, $6)";
+
+    let _ = sqlx::query(&sql)
+        .bind(&user.bbb_id)
+        .bind(&user.email)
+        .bind(&user.phone)
+        .bind(&user.data)
+        .bind(chrono::offset::Local::now())
+        .bind(chrono::offset::Local::now())
+        .execute(&pool)
+        .await
+        .map_err(|e| {
+            println!("{:?}", e);
+            CustomError::InternalServerError
+        })?;
+
+    Ok((StatusCode::CREATED, Json(user)))
 }

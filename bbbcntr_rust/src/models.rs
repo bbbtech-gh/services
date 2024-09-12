@@ -5,7 +5,7 @@ use sqlx::{types::Json};
 
 #[derive(sqlx::FromRow, Deserialize, Serialize)]
 pub struct Client {
-    pub id: i32,
+    pub client_id: i32,
     pub email: String,
     pub domain: String,
     pub detail: String,
@@ -15,7 +15,7 @@ pub struct Client {
 
 #[derive(sqlx::FromRow, Deserialize, Serialize)]
 pub struct User {
-    pub id: i32,
+    pub user_id: i32,
     pub bbb_id: String,
     pub email: String,
     pub phone: Option<String>,
@@ -26,7 +26,7 @@ pub struct User {
 
 #[derive(sqlx::FromRow, Deserialize, Serialize)]
 pub struct Token {
-    pub id: i32,
+    pub token_id: i32,
     pub client_id: i32,
     pub scopes: Json<serde_json::Value>,
     pub email: String,

@@ -1,6 +1,6 @@
 -- Add migration script here
 CREATE TABLE clients (
-    id  SERIAL PRIMARY KEY,
+    client_id  SERIAL PRIMARY KEY,
     domain varchar(511) NOT NULL UNIQUE,
     email varchar(255) NOT NULL UNIQUE,
     detail text NOT NULL,

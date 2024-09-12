@@ -16,3 +16,4 @@ sqlx = { version = "0.8.2", features = ["json", "postgres", "runtime-tokio-nativ
 chrono = { version = "0.4.*", features = ["serde"] }
 sqlx-core = "0.8.2"
 anyhow = "1.0.87"
+tower = { version = "0.5.1", features = ["util"] }

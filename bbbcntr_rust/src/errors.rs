@@ -1,7 +1,7 @@
 use axum::{http::StatusCode, response::IntoResponse, Json};
 use serde_json::json;
 
-
+#[derive(Debug)]
 pub enum CustomError {
     BadRequest,
     UserNotFound,
@@ -11,6 +11,7 @@ pub enum CustomError {
     ClientNotFound,
     ClientExists,
     InternalServerError,
+    ClientApplicationExists
 }
 
 impl IntoResponse for CustomError {
@@ -29,6 +30,7 @@ impl IntoResponse for CustomError {
             // Self::TokenExists => (StatusCode::BAD_REQUEST, "Token already exists")
             Self::UserExists => (StatusCode::BAD_REQUEST, "User already exists"),
             Self::ClientExists => (StatusCode::BAD_REQUEST, "Client already exists"),
+            Self::ClientApplicationExists => (StatusCode::BAD_REQUEST, "Client verification pending or expired.."),
         };
         (status, Json(json!({"error": error_message}))).into_response()
     }
