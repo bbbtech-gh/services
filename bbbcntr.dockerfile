@@ -1,39 +1,15 @@
-FROM bitwalker/alpine-elixir-phoenix:latest
+FROM rust:latest
 
-WORKDIR /app
+COPY bbbcntr_rust/ ./
 
-COPY ./bbbcntr .
+# RUN cargo install sqlx-cli
 
-# WORKDIR /app/bbbcntr
+# Build your program for release
+RUN cargo build --release
 
-RUN ls -Rla
-RUN mix deps.get --only prod
-RUN MIX_ENV=prod mix compile
-# RUN npm install --prefix assets
-# RUN npm run deploy --prefix assets
-RUN MIX_ENV=prod mix assets.deploy
-RUN MIX_ENV=prod mix phx.digest
-# RUN export SECRET_KEY_BASE="$(mix phx.gen.secret)"
-RUN MIX_ENV=prod mix release
+CMD ["echo", "hello\n\n\n\n\n\n\n\n"]
+# CMD ["sqlx", "database", "create"]
+# CMD ["sqlx", "migrate", "run"]
 
-CMD ["_build/prod/rel/bbbcntr/bin/bbbcntr", "start"]
-
-# FROM bitwalker/alpine-elixir-phoenix:latest
-
-# WORKDIR /app
-
-# COPY ./bbbcntr .
-
-# # WORKDIR /app/bbbcntr
-
-# RUN ls -Rla
-# RUN mix deps.get
-# RUN mix compile
-# # RUN npm install --prefix assets
-# # RUN npm run deploy --prefix assets
-# RUN mix assets.deploy
-# RUN mix phx.digest
-# # RUN export SECRET_KEY_BASE="$(mix phx.gen.secret)"
-# RUN mix release
-
-# CMD ["_build/dev/rel/bbbcntr/bin/bbbcntr", "start"]
+# Run the binary
+CMD ["./target/release/bbbcntr_rust"]

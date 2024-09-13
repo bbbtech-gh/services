@@ -35,7 +35,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: postgres
+      POSTGRES_DB: bbbcntr
     volumes:
       - db_data:/var/lib/postgresql/data
   bbbcntr:
@@ -43,13 +43,7 @@ services:
       dockerfile: bbbcntr.dockerfile
       context: .
     environment:
-      - BUILD_VERSION=${BUILD_VERSION}
-      - DATABASE_URL=ecto://postgres:postgres@db/postgres
-      - PHX_HOST=bbbcntr.localhost
-      - ERL_MAX_PORTS=1024
-      # - PORT: "4000"
-      - SECRET_KEY_BASE="g+v82QIGqp8YdRVb3PCmcNgc43sAuGdb0SnX9GK+74OVRlAjmdaikFgwBLmINJAJ" # i nkow this is bad
-      # - APP_NAME: bbbcntr
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/bbbcntr
     depends_on:
       - db
   caddy:
@@ -65,13 +59,6 @@ services:
     build:
       dockerfile: bot_api.dockerfile
       context: .
-    # environment:
-      # - BUILD_VERSION=${BUILD_VERSION}
-      # - DATABASE_URL=ecto://postgres:postgres@db/postgres
-      # - ERL_MAX_PORTS=1024
-      # # - PORT: "4000"
-      # - SECRET_KEY_BASE="g+v82QIGqp8YdRVb3PCmcNgc43sAuGdb0SnX9GK+74OVRlAjmdaikFgwBLmINJAJ" # i nkow this is bad
-      # - APP_NAME: bbbcntr
     depends_on:
       - db
 
